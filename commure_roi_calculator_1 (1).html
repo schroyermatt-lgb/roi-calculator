@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commure Patient Intake Agent — ROI Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:      #0C2340;
+    --navy-mid:  #163354;
+    --blue:      #1A6BB5;
+    --blue-lt:   #EBF4FF;
+    --teal:      #0A7B5E;
+    --teal-lt:   #E0F5EE;
+    --gold:      #C89A2E;
+    --gold-lt:   #FDF5E0;
+    --ink:       #111827;
+    --ink-mid:   #374151;
+    --ink-light: #6B7280;
+    --rule:      #E5E7EB;
+    --surface:   #F9FAFB;
+    --white:     #FFFFFF;
+    --red:       #B91C1C;
+    --red-lt:    #FEF2F2;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── Header ── */
+  .masthead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 36px; height: 36px;
+    background: var(--navy);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-mark svg { width: 20px; height: 20px; }
+  .brand-name {
+    font-size: 15px; font-weight: 600;
+    color: var(--navy); letter-spacing: -0.01em;
+  }
+  .brand-sub { font-size: 12px; color: var(--ink-light); font-weight: 400; }
+
+  .proof-badge {
+    background: var(--teal-lt);
+    border: 1px solid rgba(10,123,94,0.2);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 11px;
+    color: var(--teal);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-align: right;
+  }
+  .proof-badge strong { display: block; font-size: 13px; font-weight: 600; }
+
+  /* ── Hero ── */
+  .hero { margin-bottom: 40px; }
+  .hero-eyebrow {
+    font-size: 11px; font-weight: 600;
+    color: var(--blue); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .hero-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 38px; line-height: 1.12;
+    color: var(--navy); margin-bottom: 14px;
+    letter-spacing: -0.02em;
+  }
+  .hero-title em { font-style: italic; color: var(--blue); }
+  .hero-body {
+    font-size: 15px; line-height: 1.7;
+    color: var(--ink-mid); max-width: 580px;
+  }
+
+  /* ── Two-column grid ── */
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 680px) {
+    .calc-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 28px; }
+  }
+
+  /* ── Inputs panel ── */
+  .panel {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: var(--navy);
+    padding: 18px 24px;
+  }
+  .panel-header-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--white); letter-spacing: 0.01em;
+  }
+  .panel-header-sub {
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    margin-top: 3px;
+  }
+  .panel-body { padding: 24px; }
+
+  /* ── Input fields ── */
+  .field { margin-bottom: 24px; }
+  .field:last-child { margin-bottom: 0; }
+
+  .field-label {
+    font-size: 12px; font-weight: 600;
+    color: var(--ink-mid); margin-bottom: 6px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .field-hint {
+    font-size: 11px; font-weight: 400;
+    color: var(--ink-light);
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex; align-items: center;
+  }
+  .input-prefix, .input-suffix {
+    position: absolute;
+    font-size: 14px; font-weight: 500;
+    color: var(--ink-light);
+    pointer-events: none;
+  }
+  .input-prefix { left: 14px; }
+  .input-suffix { right: 14px; }
+
+  input[type="number"] {
+    width: 100%;
+    height: 48px;
+    border: 1.5px solid var(--rule);
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 500;
+    color: var(--ink);
+    background: var(--surface);
+    transition: border-color 0.15s, background 0.15s;
+    -moz-appearance: textfield;
+    appearance: textfield;
+    outline: none;
+  }
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus {
+    border-color: var(--blue);
+    background: var(--white);
+  }
+  .has-prefix input { padding: 0 14px 0 32px; }
+  .has-suffix input { padding: 0 36px 0 14px; }
+  .plain input  { padding: 0 14px; }
+
+  /* Slider */
+  .slider-wrap { margin-top: 8px; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%; height: 4px;
+    border-radius: 2px;
+    background: var(--rule);
+    outline: none; cursor: pointer;
+    transition: background 0.2s;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--blue);
+    border: 3px solid var(--white);
+    box-shadow: 0 0 0 1.5px var(--blue);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--blue);
+    border: 3px solid var(--white);
+    cursor: pointer;
+  }
+  .slider-labels {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--ink-light);
+    margin-top: 5px;
+  }
+
+  .field-value-display {
+    display: inline-block;
+    background: var(--blue-lt);
+    color: var(--blue);
+    font-size: 13px; font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .divider-light {
+    height: 1px; background: var(--rule);
+    margin: 20px 0;
+  }
+
+  /* ── Results panel ── */
+  .results-panel {
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 24px;
+  }
+
+  .results-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+    padding: 18px 24px 20px;
+  }
+  .results-header-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--white); letter-spacing: 0.01em;
+  }
+  .results-header-sub {
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    margin-top: 3px;
+  }
+
+  .results-body { padding: 20px 24px 24px; }
+
+  /* Primary metric */
+  .primary-metric {
+    text-align: center;
+    padding: 20px 16px;
+    background: var(--navy);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .primary-metric::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(26,107,181,0.15);
+  }
+  .primary-label {
+    font-size: 11px; font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .primary-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 42px; line-height: 1;
+    color: var(--white);
+    letter-spacing: -0.02em;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .primary-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    margin-top: 5px;
+  }
+
+  /* Metric cards */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 12px 14px;
+    transition: transform 0.2s;
+  }
+  .metric-card:hover { transform: translateY(-1px); }
+  .metric-card-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--ink-light);
+    text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .metric-card-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px; line-height: 1;
+    letter-spacing: -0.02em;
+    transition: color 0.3s;
+  }
+  .metric-card-sub {
+    font-size: 10px; color: var(--ink-light);
+    margin-top: 3px;
+  }
+  .metric-teal .metric-card-value { color: var(--teal); }
+  .metric-blue .metric-card-value { color: var(--blue); }
+  .metric-gold .metric-card-value { color: var(--gold); }
+  .metric-navy .metric-card-value { color: var(--navy); }
+
+  /* Comparison bar */
+  .comparison {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .comparison-title {
+    font-size: 10px; font-weight: 600;
+    color: var(--ink-light); text-transform: uppercase;
+    letter-spacing: 0.06em; margin-bottom: 12px;
+  }
+  .comp-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .comp-row:last-child { margin-bottom: 0; }
+  .comp-label {
+    font-size: 11px; color: var(--ink-mid);
+    width: 70px; flex-shrink: 0;
+  }
+  .comp-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .comp-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .bar-before { background: #D1D5DB; }
+  .bar-after  { background: var(--teal); }
+  .comp-pct {
+    font-size: 11px; font-weight: 600;
+    width: 36px; text-align: right; flex-shrink: 0;
+  }
+  .pct-red  { color: var(--red); }
+  .pct-teal { color: var(--teal); }
+
+  /* Terra Bella comparison */
+  .terra-bella-box {
+    background: var(--teal-lt);
+    border: 1px solid rgba(10,123,94,0.2);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+  .tb-header {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+  }
+  .tb-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%; background: var(--teal);
+    flex-shrink: 0;
+  }
+  .tb-title {
+    font-size: 11px; font-weight: 600;
+    color: var(--teal); text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .tb-rows { display: flex; flex-direction: column; gap: 6px; }
+  .tb-row {
+    display: flex; justify-content: space-between;
+    align-items: center;
+  }
+  .tb-metric { font-size: 11px; color: var(--ink-mid); }
+  .tb-values {
+    display: flex; gap: 8px; align-items: center;
+    font-size: 11px;
+  }
+  .tb-before { color: var(--ink-light); text-decoration: line-through; }
+  .tb-after  { font-weight: 600; color: var(--teal); }
+  .tb-arrow  { color: var(--teal); font-size: 10px; }
+
+  /* CTA */
+  .cta-block { text-align: center; }
+  .cta-btn {
+    display: inline-block; width: 100%;
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600;
+    border: none; border-radius: 10px;
+    padding: 14px 24px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .cta-btn:hover { background: var(--blue); transform: translateY(-1px); }
+  .cta-btn:active { transform: translateY(0); }
+  .cta-note {
+    font-size: 10px; color: var(--ink-light);
+    margin-top: 8px; line-height: 1.5;
+  }
+
+  /* ── Methodology callout ── */
+  .methodology {
+    margin-top: 32px;
+    background: var(--white);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 20px 24px;
+  }
+  .methodology-title {
+    font-size: 11px; font-weight: 600;
+    color: var(--ink-light); text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 10px;
+  }
+  .methodology-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 600px) {
+    .methodology-grid { grid-template-columns: 1fr; }
+  }
+  .meth-item { }
+  .meth-label {
+    font-size: 10px; font-weight: 600;
+    color: var(--ink-light); text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 3px;
+  }
+  .meth-value {
+    font-size: 12px; color: var(--ink-mid);
+    line-height: 1.5;
+  }
+
+  /* Number animation */
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+  .pop { animation: pop 0.35s ease-out; }
+
+  /* Disclaimer */
+  .disclaimer {
+    margin-top: 20px;
+    font-size: 10px; color: var(--ink-light);
+    line-height: 1.6; text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Masthead -->
+  <div class="masthead">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="7" height="7" rx="2" fill="white" opacity="0.9"/>
+          <rect x="11" y="2" width="7" height="7" rx="2" fill="white" opacity="0.55"/>
+          <rect x="2" y="11" width="7" height="7" rx="2" fill="white" opacity="0.55"/>
+          <rect x="11" y="11" width="7" height="7" rx="2" fill="white" opacity="0.3"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">Commure Patient Intake Agent</div>
+        <div class="brand-sub">ROI Calculator</div>
+      </div>
+    </div>
+    <div class="proof-badge">
+      <strong>Validated by Terra Bella Health</strong>
+      $1.5M saved · 45% fewer abandoned calls
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-eyebrow">Operational Impact Estimator</div>
+    <h1 class="hero-title">What is call abandonment<br><em>costing your health system?</em></h1>
+    <p class="hero-body">Enter your organization's numbers below. We'll calculate your estimated annual impact — based on the same methodology that delivered $1.5M in savings for Terra Bella Health.</p>
+  </div>
+
+  <!-- Main grid -->
+  <div class="calc-grid">
+
+    <!-- LEFT: Inputs -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-header-title">Your health system</div>
+        <div class="panel-header-sub">Adjust inputs to match your current operations</div>
+      </div>
+      <div class="panel-body">
+
+        <!-- Monthly inbound calls -->
+        <div class="field">
+          <div class="field-label">
+            Monthly inbound patient calls
+            <span class="field-hint">Scheduling + access lines</span>
+          </div>
+          <div class="input-wrap plain">
+            <input type="number" id="monthly_calls" value="12000" min="500" max="200000" step="500" oninput="recalc()">
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="monthly_calls_slider" min="500" max="100000" step="500" value="12000" oninput="syncSlider('monthly_calls','monthly_calls_slider'); recalc()">
+            <div class="slider-labels"><span>500</span><span>100,000+</span></div>
+          </div>
+        </div>
+
+        <!-- Current abandonment rate -->
+        <div class="field">
+          <div class="field-label">
+            Current call abandonment rate
+            <span class="field-value-display" id="abandon_display">28%</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="abandon_rate" min="5" max="60" step="1" value="28" oninput="recalc()">
+            <div class="slider-labels"><span>5%</span><span>60%</span></div>
+          </div>
+          <div style="font-size:11px; color:var(--ink-light); margin-top:6px;">Industry average: 22–35% · Terra Bella before Commure: 28%</div>
+        </div>
+
+        <div class="divider-light"></div>
+
+        <!-- Avg appointment value -->
+        <div class="field">
+          <div class="field-label">
+            Average appointment revenue value
+            <span class="field-hint">Net per scheduled visit</span>
+          </div>
+          <div class="input-wrap has-prefix">
+            <span class="input-prefix">$</span>
+            <input type="number" id="appt_value" value="285" min="50" max="2000" step="5" oninput="recalc()">
+          </div>
+        </div>
+
+        <!-- Booking conversion rate -->
+        <div class="field">
+          <div class="field-label">
+            Current booking conversion rate
+            <span class="field-value-display" id="conversion_display">62%</span>
+          </div>
+          <div class="slider-wrap">
+            <input type="range" id="conversion_rate" min="20" max="95" step="1" value="62" oninput="recalc()">
+            <div class="slider-labels"><span>20%</span><span>95%</span></div>
+          </div>
+          <div style="font-size:11px; color:var(--ink-light); margin-top:6px;">Of connected calls that result in a booked appointment</div>
+        </div>
+
+        <div class="divider-light"></div>
+
+        <!-- FTE call center staff -->
+        <div class="field">
+          <div class="field-label">
+            Call center FTEs (scheduling)
+            <span class="field-hint">Full-time equivalent staff</span>
+          </div>
+          <div class="input-wrap plain">
+            <input type="number" id="fte_count" value="18" min="1" max="500" step="1" oninput="recalc()">
+          </div>
+        </div>
+
+        <!-- Avg FTE fully-loaded cost -->
+        <div class="field">
+          <div class="field-label">
+            Avg. fully-loaded FTE cost / year
+            <span class="field-hint">Salary + benefits + overhead</span>
+          </div>
+          <div class="input-wrap has-prefix">
+            <span class="input-prefix">$</span>
+            <input type="number" id="fte_cost" value="58000" min="30000" max="150000" step="1000" oninput="recalc()">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="results-panel">
+      <div class="results-header">
+        <div class="results-header-title">Your estimated annual impact</div>
+        <div class="results-header-sub">Based on Terra Bella Health outcomes · Updated live</div>
+      </div>
+      <div class="results-body">
+
+        <!-- Primary: Total savings -->
+        <div class="primary-metric">
+          <div class="primary-label">Estimated annual savings</div>
+          <div class="primary-value" id="total_savings">$0</div>
+          <div class="primary-sub">Revenue recovered + operational cost reduction</div>
+        </div>
+
+        <!-- 4 metric cards -->
+        <div class="metric-grid">
+          <div class="metric-card metric-teal">
+            <div class="metric-card-label">Recovered revenue</div>
+            <div class="metric-card-value" id="recovered_revenue">$0</div>
+            <div class="metric-card-sub">From reduced abandonment</div>
+          </div>
+          <div class="metric-card metric-blue">
+            <div class="metric-card-label">Booking lift value</div>
+            <div class="metric-card-value" id="booking_lift">$0</div>
+            <div class="metric-card-sub">From conversion increase</div>
+          </div>
+          <div class="metric-card metric-gold">
+            <div class="metric-card-label">FTE cost savings</div>
+            <div class="metric-card-value" id="fte_savings">$0</div>
+            <div class="metric-card-sub">Operational efficiency</div>
+          </div>
+          <div class="metric-card metric-navy">
+            <div class="metric-card-label">Calls recovered</div>
+            <div class="metric-card-value" id="calls_recovered">0</div>
+            <div class="metric-card-sub">Per month</div>
+          </div>
+        </div>
+
+        <!-- Before/after comparison bars -->
+        <div class="comparison">
+          <div class="comparison-title">Before vs. after Patient Intake Agent</div>
+          <div class="comp-row">
+            <div class="comp-label">Abandonment</div>
+            <div class="comp-bar-wrap">
+              <div class="comp-bar bar-before" id="bar_abandon_before" style="width:100%"></div>
+            </div>
+            <div class="comp-pct pct-red" id="pct_abandon_before">28%</div>
+          </div>
+          <div class="comp-row">
+            <div class="comp-label" style="color:var(--teal); font-weight:600;">With PIA</div>
+            <div class="comp-bar-wrap">
+              <div class="comp-bar bar-after" id="bar_abandon_after" style="width:55%"></div>
+            </div>
+            <div class="comp-pct pct-teal" id="pct_abandon_after">15%</div>
+          </div>
+          <div style="height:8px;"></div>
+          <div class="comp-row">
+            <div class="comp-label">Conversion</div>
+            <div class="comp-bar-wrap">
+              <div class="comp-bar bar-before" id="bar_conv_before" style="width:65%"></div>
+            </div>
+            <div class="comp-pct pct-red" id="pct_conv_before">62%</div>
+          </div>
+          <div class="comp-row">
+            <div class="comp-label" style="color:var(--teal); font-weight:600;">With PIA</div>
+            <div class="comp-bar-wrap">
+              <div class="comp-bar bar-after" id="bar_conv_after" style="width:79%"></div>
+            </div>
+            <div class="comp-pct pct-teal" id="pct_conv_after">74%</div>
+          </div>
+        </div>
+
+        <!-- Terra Bella proof -->
+        <div class="terra-bella-box">
+          <div class="tb-header">
+            <div class="tb-dot"></div>
+            <div class="tb-title">Terra Bella Health — actual results</div>
+          </div>
+          <div class="tb-rows">
+            <div class="tb-row">
+              <div class="tb-metric">Call abandonment rate</div>
+              <div class="tb-values">
+                <span class="tb-before">28%</span>
+                <span class="tb-arrow">→</span>
+                <span class="tb-after">15.4% (−45%)</span>
+              </div>
+            </div>
+            <div class="tb-row">
+              <div class="tb-metric">Booking conversion</div>
+              <div class="tb-values">
+                <span class="tb-before">62%</span>
+                <span class="tb-arrow">→</span>
+                <span class="tb-after">74.4% (+20%)</span>
+              </div>
+            </div>
+            <div class="tb-row">
+              <div class="tb-metric">Operational savings</div>
+              <div class="tb-values">
+                <span class="tb-after">$1.5M year one</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-block">
+          <button class="cta-btn" onclick="alert('In the live version, this routes to a Calendly booking page pre-populated with the org\'s results.')">
+            Get my detailed savings report →
+          </button>
+          <div class="cta-note">No PHI collected · Takes 20 minutes · Results delivered same day</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Methodology -->
+  <div class="methodology">
+    <div class="methodology-title">How we calculate your estimate</div>
+    <div class="methodology-grid">
+      <div class="meth-item">
+        <div class="meth-label">Abandonment recovery</div>
+        <div class="meth-value">Applies Terra Bella's 45% abandonment reduction to your monthly call volume, then multiplies recovered calls by your booking conversion rate and average appointment value.</div>
+      </div>
+      <div class="meth-item">
+        <div class="meth-label">Conversion lift</div>
+        <div class="meth-value">Applies Terra Bella's 20% booking conversion improvement to your connected call volume (calls that reach an agent), calculating incremental appointments and associated revenue.</div>
+      </div>
+      <div class="meth-item">
+        <div class="meth-label">Operational efficiency</div>
+        <div class="meth-value">Estimates FTE redeployment based on call volume automation. Patient Intake Agent typically automates 25–40% of routine scheduling tasks, reducing manual handle time per call.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Results are estimates based on Terra Bella Health outcomes and industry benchmarks. Actual results will vary by health system size, EHR environment, call mix, and implementation scope. All calculations use operational inputs only — no patient data is collected or processed. HIPAA compliant.
+  </div>
+
+</div>
+
+<script>
+  function fmt(n, decimals) {
+    if (Math.abs(n) >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1000) return '$' + Math.round(n/1000) + 'K';
+    return '$' + Math.round(n);
+  }
+  function fmtNum(n) {
+    if (n >= 1000) return (n/1000).toFixed(1) + 'K';
+    return String(Math.round(n));
+  }
+  function animateValue(el, newText) {
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.textContent = newText;
+    el.classList.add('pop');
+  }
+  function syncSlider(inputId, sliderId) {
+    document.getElementById(inputId).value = document.getElementById(sliderId).value;
+  }
+
+  function recalc() {
+    const monthly_calls   = Math.max(500,  parseFloat(document.getElementById('monthly_calls').value)   || 0);
+    const abandon_rate    = Math.max(5,    parseFloat(document.getElementById('abandon_rate').value)     || 0) / 100;
+    const appt_value      = Math.max(50,   parseFloat(document.getElementById('appt_value').value)       || 0);
+    const conversion_rate = Math.max(0.2,  parseFloat(document.getElementById('conversion_rate').value)  || 0) / 100;
+    const fte_count       = Math.max(1,    parseFloat(document.getElementById('fte_count').value)         || 0);
+    const fte_cost        = Math.max(30000,parseFloat(document.getElementById('fte_cost').value)          || 0);
+
+    // Terra Bella improvement factors
+    const ABANDON_REDUCTION = 0.45;  // 45% reduction
+    const CONVERSION_LIFT   = 0.20;  // 20% improvement
+    const FTE_AUTOMATION    = 0.32;  // ~32% of handle time automated (mid of 25-40%)
+
+    // Derived values
+    const annual_calls    = monthly_calls * 12;
+    const abandoned_calls = annual_calls * abandon_rate;
+    const connected_calls = annual_calls * (1 - abandon_rate);
+
+    // After Commure
+    const new_abandon_rate    = abandon_rate * (1 - ABANDON_REDUCTION);
+    const new_abandon_pct     = Math.round(new_abandon_rate * 100);
+    const new_conversion_rate = Math.min(0.98, conversion_rate * (1 + CONVERSION_LIFT));
+    const new_conv_pct        = Math.round(new_conversion_rate * 100);
+
+    // Recovered from abandonment: fewer abandoned → more connected → some book
+    const calls_recovered_annual = abandoned_calls * ABANDON_REDUCTION;
+    const calls_recovered_monthly = Math.round(calls_recovered_annual / 12);
+    const recovered_appts = calls_recovered_annual * new_conversion_rate;
+    const recovered_revenue = recovered_appts * appt_value;
+
+    // Conversion lift on already-connected calls
+    const existing_booked   = connected_calls * conversion_rate;
+    const new_booked        = connected_calls * new_conversion_rate;
+    const incremental_appts = new_booked - existing_booked;
+    const booking_lift_val  = incremental_appts * appt_value;
+
+    // FTE savings
+    const fte_savings = fte_count * fte_cost * FTE_AUTOMATION;
+
+    // Total
+    const total = recovered_revenue + booking_lift_val + fte_savings;
+
+    // Update UI
+    animateValue(document.getElementById('total_savings'),      fmt(total));
+    animateValue(document.getElementById('recovered_revenue'),  fmt(recovered_revenue));
+    animateValue(document.getElementById('booking_lift'),       fmt(booking_lift_val));
+    animateValue(document.getElementById('fte_savings'),        fmt(fte_savings));
+    animateValue(document.getElementById('calls_recovered'),    fmtNum(calls_recovered_monthly));
+
+    // Labels
+    document.getElementById('abandon_display').textContent    = Math.round(abandon_rate * 100) + '%';
+    document.getElementById('conversion_display').textContent = Math.round(conversion_rate * 100) + '%';
+    document.getElementById('pct_abandon_before').textContent = Math.round(abandon_rate * 100) + '%';
+    document.getElementById('pct_abandon_after').textContent  = new_abandon_pct + '%';
+    document.getElementById('pct_conv_before').textContent    = Math.round(conversion_rate * 100) + '%';
+    document.getElementById('pct_conv_after').textContent     = new_conv_pct + '%';
+
+    // Bars
+    const max_abandon = 60;
+    document.getElementById('bar_abandon_before').style.width = (abandon_rate * 100 / max_abandon * 100) + '%';
+    document.getElementById('bar_abandon_after').style.width  = (new_abandon_rate * 100 / max_abandon * 100) + '%';
+    document.getElementById('bar_conv_before').style.width    = (conversion_rate * 100) + '%';
+    document.getElementById('bar_conv_after').style.width     = (new_conversion_rate * 100) + '%';
+
+    // Sync slider
+    document.getElementById('monthly_calls_slider').value = monthly_calls;
+  }
+
+  // Init
+  recalc();
+</script>
+</body>
+</html>
